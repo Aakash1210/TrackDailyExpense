@@ -27,12 +27,12 @@ class ExpenseAPI(APIView):
         
     def post(self,request):
         daily_expense_data=request.data
-        serializer=DailyExpenseSerializer(data=daily_expense_data)
+        serializer=DailyExpenseSerializer(data=daily_expense_data,many=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response({
-                'status':False,
+                'status':serializer.data,
                 'message':serializer.errors
             })
     
@@ -47,6 +47,13 @@ class ExpenseAPI(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors)
+    
+    def delete(self,request):
+        daily_expense_data=request.data
+        daily_expense_objs=DailyExpense.objects.get(id=daily_expense_data['id'])
+        daily_expense_objs.delete()
+        return Response({"message":f"Delete the data"})
+
 
 class CategoryAPI(APIView):
     def get(self,request):#Category
