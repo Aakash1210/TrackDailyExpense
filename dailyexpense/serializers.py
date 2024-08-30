@@ -16,11 +16,52 @@ class DailyExpenseSerializer(serializers.ModelSerializer):
         fields='__all__'
         depth=1
 
+class MonthlyWiseExpenseSerializer(serializers.ModelSerializer):
+    category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source='category')
+    # category=CategorySerializer()
+    monthly_expense = serializers.DecimalField(max_digits=10, decimal_places=2)
+    month=serializers.SerializerMethodField()
+    class Meta:
+        model=DailyExpense
+        fields=['monthly_expense','month']
+        # depth=1
+
+    def get_month(self, obj):
+        return obj['month'].strftime('%y-%b-%d')
+        
+
+class DailyWiseExpenseSerializer(serializers.ModelSerializer):
+    # category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source='category')
+    daily_expense = serializers.DecimalField(max_digits=10, decimal_places=2)
+    daily_income=serializers.DecimalField(max_digits=10, decimal_places=2)
+    daily_savings=serializers.DecimalField(max_digits=10, decimal_places=2)
+    daily=serializers.SerializerMethodField()
+
+    class Meta:
+        model=DailyExpense
+        fields=['daily_income','daily_expense','daily_savings','daily']
+    
+    def get_daily(self, obj):
+        return obj['daily'].strftime('%d')
     # def validate(self, data):
     #     print(data)
     #     if data['income']<0 or data['expense']<0:
     #         raise serializers.ValidationError('value Should be Greater than 0')
     #     return data
+class yearlyWiseExpenseSerializer(serializers.ModelSerializer):
+    # category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source='category')
+    yearly_expense = serializers.DecimalField(max_digits=10, decimal_places=2)
+    yearly_income=serializers.DecimalField(max_digits=10, decimal_places=2)
+    yearly_savings=serializers.DecimalField(max_digits=10, decimal_places=2)
+    year=serializers.SerializerMethodField()
+
+    class Meta:
+        model=DailyExpense
+        fields=['yearly_income','yearly_expense','yearly_savings','year']
+    
+    def get_year(self, obj):
+        return obj['year'].strftime('%Y')
+
     
 
     

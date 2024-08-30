@@ -14,8 +14,8 @@ def csv_to_json(csv_file_path, json_file_path):
         json.dump(data, json_file, indent=4)
 
 # Paths to the CSV and JSON files
-csv_file_path = '/Users/rajendrachauhan/Downloads/transport.csv'
-json_file_path = '/Users/rajendrachauhan/Downloads/transport.json'
+csv_file_path = '/Users/rajendrachauhan/Downloads/cloth.csv'
+json_file_path = '/Users/rajendrachauhan/Downloads/cloth.json'
 
 # Convert CSV to JSON
 csv_to_json(csv_file_path, json_file_path)
