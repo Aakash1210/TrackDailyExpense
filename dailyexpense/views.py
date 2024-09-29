@@ -1,14 +1,13 @@
-from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.views import APIView
-from .serializers import DailyExpenseSerializer,CategorySerializer,MonthlyWiseExpenseSerializer,DailyWiseExpenseSerializer,yearlyWiseExpenseSerializer
+from .serializers import DailyExpenseSerializer,CategorySerializer,MonthlyWiseExpenseSerializer,DailyWiseExpenseSerializer,yearlyWiseExpenseSerializer,DateWiseIncomeSerializer,DateWiseExpenseSerializer,YearlyCountIncomeSerializer
 from .models import DailyExpense,Category
 from django.db import IntegrityError
 from rest_framework.exceptions import ValidationError
-from datetime import datetime,timedelta
-from django.db.models import Count, Sum,ExpressionWrapper,DecimalField
+from datetime import datetime
+from django.db.models import Sum,ExpressionWrapper,DecimalField
 from django.db.models.functions import TruncMonth,TruncDay,TruncYear
 
 # Create your views here.
@@ -53,13 +52,70 @@ def get_dailywise_expense(request):
 @api_view(['GET'])
 def get_yearlywise_expense(request):
     try:
-        yearlywise_expense = DailyExpense.objects.annotate(year=TruncYear('daily_expense_date')).values('year').annotate(yearly_expense=Sum('expense'),yearly_income=Sum('income'),yearly_savings=ExpressionWrapper(Sum('income')-Sum('expense'),output_field=DecimalField())).order_by('year')
+        yearlywise_expense = DailyExpense.objects.annotate(year=TruncYear('daily_expense_date')).values('year','id').annotate(yearly_expense=Sum('expense'),yearly_income=Sum('income'),yearly_savings=ExpressionWrapper(Sum('income')-Sum('expense'),output_field=DecimalField())).order_by('year')
     except DailyExpense.DoesNotExist:
         return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
     
     serializer = yearlyWiseExpenseSerializer(yearlywise_expense, many=True)
 
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_Datewise_income(request,date):
+
+    try:
+        date_param=datetime.strptime(date, "%Y-%m-%d").date()
+        Datewise_income = DailyExpense.objects.filter(daily_expense_date=date_param, income__gt=0)
+        total_income = Datewise_income.aggregate(total_income=Sum('income'))
+        serializer_income = DateWiseIncomeSerializer(Datewise_income, many=True)
+
+        Datewise_expense = DailyExpense.objects.filter(daily_expense_date=date_param, expense__gt=0)
+        total_expense = Datewise_expense.aggregate(total_expense=Sum('expense'))
+        serializer_expense = DateWiseExpenseSerializer(Datewise_expense, many=True)
+        
+        response_data = {
+            'total_income': total_income['total_income'],
+            'total_expense':total_expense['total_expense'],
+            'income': serializer_income.data,
+            'expense':serializer_expense.data
+        }
+        
+    except DailyExpense.DoesNotExist:
+        return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_YearlyTotalCount(request):
+
+    try:
+        yearly_total_count_income=DailyExpense.objects.annotate(yearly=TruncYear('daily_expense_date')).values('yearly').annotate(total_yearly_income=Sum('income')).order_by('yearly')
+        serializer_expense = YearlyCountIncomeSerializer(yearly_total_count_income, many=True)
+        
+        
+    except DailyExpense.DoesNotExist:
+        return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    return Response(serializer_expense.data, status=status.HTTP_200_OK)
+
+# @api_view(['GET'])
+# def get_Datewise_expense(request,date):
+
+#     try:
+#         date_param=datetime.strptime(date, "%Y-%m-%d").date()
+#         Datewise_expense = DailyExpense.objects.filter(daily_expense_date=date_param, income__gt=0)
+#         total_income = Datewise_expense.aggregate(total_income=Sum('income'))
+#         serializer = DateWiseExpenseSerializer(Datewise_expense, many=True)
+        
+#         response_data = {
+#             'total_income': total_income['total_income'],
+#             'expense': serializer.data
+#         }
+#     except DailyExpense.DoesNotExist:
+#         return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    
+#     return Response(response_data, status=status.HTTP_200_OK)
 
 class ExpenseAPI(APIView):
     def get(self,request):#DailyExpense

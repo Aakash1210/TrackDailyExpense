@@ -12,7 +12,7 @@ class DailyExpense(models.Model):
     income=models.DecimalField(max_digits=10,decimal_places=2,blank=True,default=0.00)
     expense=models.DecimalField(max_digits=10,decimal_places=2,blank=True,default=0.00)
     category=models.ForeignKey(Category,null=False,blank=True,on_delete=models.CASCADE,related_name='category_expenses')
-    daily_expense_date=models.DateTimeField(blank=False,null=False)
+    daily_expense_date=models.DateField(blank=False,null=False)
     descriptions= models.TextField(max_length=50,blank=True)
     created_at=models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)
